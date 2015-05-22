@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dashboard xmlns="http://www.intersystems.com/deepsee/library" name="Активность" folderName="Пользователи" title="Активность пользователей" description="" keywords="" owner="" shared="true" public="true" locked="false" resource="" timeCreated="2015-05-20T14:23:48.355Z" createdBy="SuperUser" category="" bookCover="" scheme="" worklistCount="2" snapTo="true" snapGrid="true" gridRows="10" gridCols="10" canResize="true" canModify="true" showTitleBar="true" companyName="" companyLogo="" companyStyle="">
+  <widget name="Виджет1" type="pivot" subtype="pivot" subtypeClass="lineChart" title="" dataSource="Пользователи/Активность.pivot" dataLink="" drillDownDataSource="" width="200" height="200" sidebarContent="" showSidebar="false" sidebarWidth="" maximized="false" homeRowL="0" homeColL="0" colSpanL="4" rowSpanL="4" showToolbar="true" theme="" dataColorList="">
+  </widget>
+  <widget name="Виджет2" type="pivot" subtype="columnChart3D" subtypeClass="barChart" title="" dataSource="Пользователи/Активность.pivot" dataLink="" drillDownDataSource="" width="200" height="200" sidebarContent="" showSidebar="false" sidebarWidth="" maximized="false" homeRowL="0" homeColL="4" colSpanL="4" rowSpanL="4" showToolbar="true" theme="" dataColorList="">
+  </widget>
+</dashboard>
