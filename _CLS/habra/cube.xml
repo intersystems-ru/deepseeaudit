@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+<Class name="habra.cube">
+<Description>
+Данные аудита</Description>
+<ProcedureBlock>1</ProcedureBlock>
+<Super>%DeepSee.CubeDefinition</Super>
+<TimeCreated>63690,78892.562265</TimeCreated>
+<DependsOn>%SYS.Audit</DependsOn>
+
+<Parameter name="DOMAIN"/>
+
+<XData name="Cube">
+<Description>
+Cube definition from Architect.</Description>
+<XMLNamespace>http://www.intersystems.com/deepsee</XMLNamespace>
+<Data><![CDATA[
+<cube xmlns="http://www.intersystems.com/deepsee" name="Аудит" displayName="Аудит" description="Данные аудита" disabled="false" abstract="false" sourceClass="%SYS.Audit" countMeasureName="%COUNT" bucketSize="8" bitmapChunkInMemory="false" precompute="0">
+  <dimension name="Кто" disabled="false" hasAll="false" allCaption="All Username" allDisplayName="Username" type="data" iKnowType="entity" hidden="false" showHierarchies="default">
+    <hierarchy name="H1" disabled="false">
+      <level sourceProperty="Username" name="Username" disabled="false" list="false" useDisplayValue="true" useAsFilter="true">
+      </level>
+    </hierarchy>
+  </dimension>
+  <dimension name="Что" disabled="false" hasAll="false" allCaption="All Event" allDisplayName="Event" type="data" iKnowType="entity" hidden="false" showHierarchies="default">
+    <hierarchy name="H1" disabled="false">
+      <level sourceProperty="Event" name="Event" disabled="false" list="false" useDisplayValue="true" useAsFilter="true">
+      </level>
+    </hierarchy>
+  </dimension>
+  <dimension name="Когда" disabled="false" hasAll="false" allCaption="All UTCTimeStamp" allDisplayName="UTCTimeStamp" sourceExpression="$zdatetimeh(%source.UTCTimeStamp,3)" type="time" iKnowType="entity" hidden="false" showHierarchies="default">
+    <hierarchy name="H1" disabled="false">
+      <level name="День" disabled="false" timeFunction="DayMonthYear" list="false" useDisplayValue="true" useAsFilter="true">
+      </level>
+    </hierarchy>
+  </dimension>
+</cube>
+]]></Data>
+</XData>
+</Class>
+</Export>
