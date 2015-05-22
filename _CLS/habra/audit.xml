@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+<Class name="habra.audit">
+<Description>
+Пример использования подсистемы аудита в прикладном коде</Description>
+<Super>%CSP.Page</Super>
+<TimeCreated>63689,63742.905501</TimeCreated>
+
+<Method name="EventTypesRegister">
+<Description>
+Регистрация прикладных ( пользовательских ) типов событий </Description>
+<ClassMethod>1</ClassMethod>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	#; Типы событий регистрируются через класс из системной области %SYS
+	set ns = $namespace, $namespace = "%SYS"
+	
+	#; set status = ##class(Security.Events).Create( Source, Type, Name, Description )
+	set statusC = ##class(Security.Events).Create( "habra", "audit", "create",	"Create event example" ) 
+	set statusR = ##class(Security.Events).Create( "habra", "audit", "read",	"Read event example" )
+	set statusU = ##class(Security.Events).Create( "habra", "audit", "update",	"Update event example" )
+	set statusD = ##class(Security.Events).Create( "habra", "audit", "delete",	"Delete event example" )
+	
+	set $namespace = ns
+	set status = ( statusC && statusR && statusU && statusD )
+	
+	Quit status
+]]></Implementation>
+</Method>
+
+<Method name="OnPage">
+<Description>
+Простая страница с несколькими кнопками</Description>
+<ClassMethod>1</ClassMethod>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+ 
+ &html<<!DOCTYPE html><html><head></head><body>
+	
+<h3>Hello, #($username)#!</h3><hr>
+
+<form method='post'>
+	<button name='create'>Create</button>
+	<button name='read'  >Read  </button>
+	<button name='update'>Update</button>
+	<button name='delete'>Delete</button>
+</form>
+
+</body></html>>
+
+ Quit 1
+]]></Implementation>
+</Method>
+
+<Method name="OnPreHTTP">
+<Description>
+Разбираем параметры формы</Description>
+<ClassMethod>1</ClassMethod>
+<ReturnType>%Boolean</ReturnType>
+<ServerOnly>1</ServerOnly>
+<Implementation><![CDATA[
+	
+	#; форма отправит на сервер единственный параметр - имя кнопки
+	#; http://[server]/[app]/[class]?name=
+	set name = $order( %request.Data("") )	;узнаем какая кнопка вызвала отправку
+
+	#; сохраняем в журнал аудита ( Source, Type, Name, EventData, Description )
+	set status = ##class(%SYSTEM.Security).Audit( "habra", "audit", name, "нажал кнопку", "1984" )
+
+	Quit 1
+]]></Implementation>
+</Method>
+</Class>
+</Export>
