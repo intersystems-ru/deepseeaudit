@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-32) 2015.1 (Build 429U)" ts="2015-07-23 17:24:50">
+<Class name="DeepSeeAudit.Installer">
+<Super>%XML.Adaptor</Super>
+<TimeChanged>63756,62639.281888</TimeChanged>
+<TimeCreated>63753,62724.562305</TimeCreated>
+
+<XData name="Install">
+<XMLNamespace>INSTALLER</XMLNamespace>
+<Data><![CDATA[
+<Manifest>
+
+<IfNotDef Var="Namespace">
+<Var Name="Namespace" Value="DeepSeeAudit"/>
+<Log Text="Set namespace to ${Namespace}" Level="0"/>
+</IfNotDef>
+
+<If Condition='(##class(Config.Namespaces).Exists("${Namespace}")=0)'>
+<Log Text="Creating namespace ${Namespace}" Level="0"/>
+<Namespace Name="${Namespace}" Create="yes" Code="${Namespace}" Ensemble="" Data="${Namespace}">
+<Configuration>
+<Database Name="${Namespace}" Dir="${MGRDIR}/${Namespace}" Create="yes" MountRequired="true" Resource="%DB_${Namespace}" PublicPermissions="RW" MountAtStartup="true"/>
+</Configuration>
+</Namespace>
+<Log Text="...Ready!" Level="0"/>
+</If>
+
+<Namespace Name="${Namespace}" Create="no">
+<Log Text="Mapping globals" Level="0"/>
+<GlobalMapping Global="CacheAuditD" From="CACHEAUDIT"/> 
+<Log Text="...Ready!" Level="0"/>
+
+<Log Text="Prepare web application" Level="0"/>
+<RunInstall Class="DeepSeeAudit.Installer" Method="PrepareCSP"/>
+<Log Text="...Ready!" Level="0"/>
+
+<Log Text="Download and build cube" Level="0"/>
+<RunInstall Class="DeepSeeAudit.Installer" Method="BuildCube"/>
+<Log Text="...Ready!" Level="0"/>
+
+<IfDef Var="RealTimeSync">
+<Log Text="Turning on real time synchronization" Level="0"/>
+<RunInstall Class="DeepSeeAudit.Installer" Method="TurnSync"/>
+<Log Text="...Ready!" Level="0"/>
+</IfDef>
+
+</Namespace>
+
+</Manifest>
+]]></Data>
+</XData>
+
+<Method name="setup">
+<Internal>1</Internal>
+<ClassMethod>1</ClassMethod>
+<CodeMode>objectgenerator</CodeMode>
+<FormalSpec><![CDATA[&pVars,pLogLevel:%Integer=0,pInstaller:%Installer.Installer]]></FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[ 	quit ##class(%Installer.Manifest).%Generate(%compiledclass, %code, "Install")
+]]></Implementation>
+</Method>
+
+<Method name="TurnSync">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pVars,pLogLevel,tInstaller</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set namespace = tInstaller.Evaluate("${Namespace}")	
+	do tInstaller.PushNS(namespace)
+	set className = "%SYS.Audit"
+	
+	set st1 = ..SetParameterValue(className, "DSTIME", "AUTO")
+	set st2 = ..SetParameterValue(className, "DSINTERVAL", "5")
+		
+	set status = $$$ADDSC(st1, st2)
+	if $$$ISERR(status) throw ##class(%Installer.Exception).CreateFromStatus(status)
+		
+	set status = $system.OBJ.CompileList(className _ ".cls")
+	if $$$ISERR(status) throw ##class(%Installer.Exception).CreateFromStatus(status)
+	
+	do tInstaller.PopNS()
+	return $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="SetParameterValue">
+<Description><![CDATA[
+<b>ClassName</b> - Class where parameter should be changed.<br>
+<b>ParameterName</b> - Name of that parameter.<br>
+<b>ParameterValue</b> - New value of parameter.]]></Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>ClassName:%String,ParameterName:%String,ParameterValue:%String</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	if (##class(%Dictionary.ParameterDefinition).%ExistsId(ClassName _ "||" _ ParameterName) = 1) {
+		set pDef = ##class(%Dictionary.ParameterDefinition).%OpenId(ClassName _ "||" _ ParameterName)
+	} else {
+		set pDef = ##class(%Dictionary.ParameterDefinition).%New(ClassName _ ":" _ ParameterName)
+	}
+		
+	set pDef.Default = ParameterValue
+	set status = pDef.%Save()
+	return status
+]]></Implementation>
+</Method>
+
+<Method name="PrepareCSP">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pVars,pLogLevel,tInstaller</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set namespace = tInstaller.Evaluate("${Namespace}")
+	set cspName = "/csp/" _ namespace
+	
+    do tInstaller.PushNS("%SYS")
+	 
+	if (##class(Security.Applications).Exists(cspName) = 1) {
+		set status = ##class(Security.Applications).Get(cspName, .properties)
+		if $$$ISERR(status) throw ##class(%Installer.Exception).CreateFromStatus(status)
+		
+		set properties("DeepSeeEnabled") = 1
+		
+		set status = ##class(Security.Applications).Modify(cspName, .properties)
+		if $$$ISERR(status) throw ##class(%Installer.Exception).CreateFromStatus(status)	
+	} else {
+		do ##class(Security.System).GetInstallationSecuritySetting(.security)
+    	if (security="None") {
+    		set properties("AutheEnabled") = 64 // Unauthenticated
+    	} else {
+	    	set properties("AutheEnabled") = 32 // Password
+    	}
+    	
+    	set properties("NameSpace") = namespace
+    	set properties("DeepSeeEnabled") = 1
+    	
+    	set status = ##class(Security.Applications).Create(cspName, .properties)
+    	if $$$ISERR(status) throw ##class(%Installer.Exception).CreateFromStatus(status)
+	}
+	 
+	do tInstaller.PopNS()
+	return $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="BuildCube">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pVars,pLogLevel,tInstaller</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set namespace = tInstaller.Evaluate("${Namespace}")
+	
+	do tInstaller.PushNS(namespace)
+	do ..DownloadCube(namespace)
+	set status = ##class(%DeepSee.Utils).%BuildCube("Аудит")
+	
+	do tInstaller.PopNS()
+	
+	if $$$ISERR(status) throw ##class(%Installer.Exception).CreateFromStatus(status)
+	return $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="DownloadCube">
+<Description><![CDATA[
+Download src and compile cube class.<br>
+<b>Namespace</b> - Namespace where audit cube should be created.]]></Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>Namespace:%String</FormalSpec>
+<Implementation><![CDATA[
+    set owner = "mkashche"
+    set repository = "deepseeaudit"
+    set branch = "master"
+    Set SSLConfig = "GitHub"
+   
+    zn "%SYS"
+    do:'##class(Security.SSLConfigs).Exists(SSLConfig) ##class(Security.SSLConfigs).Create(SSLConfig)
+
+ 	set req = ##class(%Net.HttpRequest).%New()
+ 	set req.Https = 1
+	set req.SSLConfiguration = SSLConfig
+	set req.Server = "api.github.com"
+	set req.Location = "repos/" _ owner _ "/" _ repository _ "/contents" 	// as described in https://developer.github.com/v3/repos/	
+	do:$d(branch) req.SetParam("ref", branch) 								// if omitted the repository’s default branch (usually master) would be used
+	do req.SetHeader("Accept","application/vnd.github.v3+json") 			// we want to receive API v3
+
+	zn Namespace	
+ 	set links = ##class(%ListOfDataTypes).%New() 	 
+ 	do links.Insert("https://raw.githubusercontent.com/mkashche/deepseeaudit/master/_CLS/habra/cube.xml")
+ 	
+	set st = ..DownloadFiles(links, req, .list)
+	set st2 = $system.OBJ.CompileList(.list)
+	
+	set status = $$$ADDSC(st, st2)
+	if $$$ISERR(status) throw ##class(%Installer.Exception).CreateFromStatus(status)
+]]></Implementation>
+</Method>
+
+<Method name="DownloadFiles">
+<Description><![CDATA[
+Download list of files on https://raw.githubusercontent.com/ server.<br>
+<b>Links</b> - List of links to raw files.<br>
+<b>Request</b> - Authenticated/Set %Net.HttpRequest object.<br>
+<b>Items</b> - Returns an array of the items loaded. ]]></Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>Links:%ListOfDataTypes,Request:%Net.HttpRequest,*Items</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	kill Items
+	set Request.Server = "raw.githubusercontent.com"
+	set st = $$$OK
+	
+	for i = 1:1:Links.Count() {
+		set streq = Request.Get($e(Links.GetAt(1),35,*)) // Remove "https://raw.githubusercontent.com/" from URL. 
+  		set:$$$ISERR(streq) st = $$$ADDSC(st, streq)
+  		set binarystream = Request.HttpResponse.Data
+  		do binarystream.Rewind() // just in case
+
+  		set stream = ##class(%GlobalCharacterStream).%New() //translating binary stream into character stream
+  		while 'binarystream.AtEnd { 
+  			do stream.Write(binarystream.Read()) 
+  		}
+  		do stream.Rewind()
+
+  		set stload = $system.OBJ.LoadStream(stream,"",.error,.items,,,,"UTF8")
+  		set:$$$ISERR(stload) st = $$$ADDSC(st, stload)
+  		merge Items = items  // Does not overwrite existing array keys: Items(itemname)=""	
+	}
+	
+	set Request.Server = "api.github.com"
+	return st
+]]></Implementation>
+</Method>
+</Class>
+</Export>
