@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-32) 2015.1 (Build 429U)" ts="2015-07-23 17:24:50">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-32) 2015.1 (Build 429U)" ts="2015-07-23 18:14:35">
 <Class name="DeepSeeAudit.Installer">
 <Super>%XML.Adaptor</Super>
-<TimeChanged>63756,62639.281888</TimeChanged>
+<TimeChanged>63756,63576.25007</TimeChanged>
 <TimeCreated>63753,62724.562305</TimeCreated>
 
 <XData name="Install">
@@ -136,7 +136,8 @@
     	set status = ##class(Security.Applications).Create(cspName, .properties)
     	if $$$ISERR(status) throw ##class(%Installer.Exception).CreateFromStatus(status)
 	}
-	 
+	
+	do EnableDeepSee^%SYS.cspServer("/csp/"_pVars("Namespace")_"/")
 	do tInstaller.PopNS()
 	return $$$OK
 ]]></Implementation>
