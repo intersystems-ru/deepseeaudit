@@ -1,7 +1,5 @@
-Cache-MDX2JSON
+DeepSee Audit
 ==============
-
-RESTful web api for MDX2JSON transformation (also JSONP and XML/A). Also supports requests about Dashboards and Widgets. Supports Caché 2014.1+.
 
 Installation
 -----------
