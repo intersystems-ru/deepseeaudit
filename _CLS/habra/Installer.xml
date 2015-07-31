@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-32) 2015.1 (Build 429U)" ts="2015-07-23 18:14:35">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-32) 2015.1 (Build 429U)" ts="2015-07-31 06:16:06">
 <Class name="DeepSeeAudit.Installer">
 <Super>%XML.Adaptor</Super>
-<TimeChanged>63756,63576.25007</TimeChanged>
+<TimeChanged>63764,21870.15648</TimeChanged>
 <TimeCreated>63753,62724.562305</TimeCreated>
 
 <XData name="Install">
@@ -11,7 +11,7 @@
 <Manifest>
 
 <IfNotDef Var="Namespace">
-<Var Name="Namespace" Value="DeepSeeAudit"/>
+<Var Name="Namespace" Value="deepseeaudit"/>
 <Log Text="Set namespace to ${Namespace}" Level="0"/>
 </IfNotDef>
 
@@ -30,7 +30,7 @@
 <GlobalMapping Global="CacheAuditD" From="CACHEAUDIT"/> 
 <Log Text="...Ready!" Level="0"/>
 
-<Log Text="Prepare web application" Level="0"/>
+<Log Text="Prepare web application, enable audit" Level="0"/>
 <RunInstall Class="DeepSeeAudit.Installer" Method="PrepareCSP"/>
 <Log Text="...Ready!" Level="0"/>
 
@@ -43,7 +43,6 @@
 <RunInstall Class="DeepSeeAudit.Installer" Method="TurnSync"/>
 <Log Text="...Ready!" Level="0"/>
 </IfDef>
-
 </Namespace>
 
 </Manifest>
@@ -65,17 +64,20 @@
 <FormalSpec>pVars,pLogLevel,tInstaller</FormalSpec>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
-	set namespace = tInstaller.Evaluate("${Namespace}")	
+	set namespace = tInstaller.Evaluate("${Namespace}")
 	do tInstaller.PushNS(namespace)
 	set className = "%SYS.Audit"
 	
-	set st1 = ..SetParameterValue(className, "DSTIME", "AUTO")
+	set st = ..SetParameterValue(className, "DSTIME", "AUTO")
 	set st2 = ..SetParameterValue(className, "DSINTERVAL", "5")
 		
-	set status = $$$ADDSC(st1, st2)
+	set status = $$$ADDSC(st, st2)
 	if $$$ISERR(status) throw ##class(%Installer.Exception).CreateFromStatus(status)
 		
-	set status = $system.OBJ.CompileList(className _ ".cls")
+	set st = $system.OBJ.CompileList(className _ ".cls")
+	set st2 = ##class(%DeepSee.CubeManager.Task.Synch).Schedule() //Run every 60 minutes
+	
+	set status = $$$ADDSC(st, st2)
 	if $$$ISERR(status) throw ##class(%Installer.Exception).CreateFromStatus(status)
 	
 	do tInstaller.PopNS()
@@ -137,7 +139,15 @@
     	if $$$ISERR(status) throw ##class(%Installer.Exception).CreateFromStatus(status)
 	}
 	
-	do EnableDeepSee^%SYS.cspServer("/csp/"_pVars("Namespace")_"/")
+	// This is to enable system audit event
+    set sysObj = ##class(Security.System).%OpenId("SYSTEM")
+    if +sysObj = 0 set sysObj = ##class(Security.System).%New()
+    set sysObj.AuditEnabled = 1
+    set status = sysObj.%Save()
+    kill sysObj
+    if $$$ISERR(status) throw ##class(%Installer.Exception).CreateFromStatus(status)
+	
+	//do EnableDeepSee^%SYS.cspServer("/csp/" _ namespace _ "/")
 	do tInstaller.PopNS()
 	return $$$OK
 ]]></Implementation>
@@ -153,10 +163,9 @@
 	do tInstaller.PushNS(namespace)
 	do ..DownloadCube(namespace)
 	set status = ##class(%DeepSee.Utils).%BuildCube("Аудит")
+	if $$$ISERR(status) throw ##class(%Installer.Exception).CreateFromStatus(status)
 	
 	do tInstaller.PopNS()
-	
-	if $$$ISERR(status) throw ##class(%Installer.Exception).CreateFromStatus(status)
 	return $$$OK
 ]]></Implementation>
 </Method>
@@ -168,7 +177,7 @@ Download src and compile cube class.<br>
 <ClassMethod>1</ClassMethod>
 <FormalSpec>Namespace:%String</FormalSpec>
 <Implementation><![CDATA[
-    set owner = "mkashche"
+    set owner = "intersystems-ru"
     set repository = "deepseeaudit"
     set branch = "master"
     Set SSLConfig = "GitHub"
@@ -185,8 +194,8 @@ Download src and compile cube class.<br>
 	do req.SetHeader("Accept","application/vnd.github.v3+json") 			// we want to receive API v3
 
 	zn Namespace	
- 	set links = ##class(%ListOfDataTypes).%New() 	 
- 	do links.Insert("https://raw.githubusercontent.com/mkashche/deepseeaudit/master/_CLS/habra/cube.xml")
+ 	set links = ##class(%ListOfDataTypes).%New()
+ 	do links.Insert("https://raw.githubusercontent.com/intersystems-ru/deepseeaudit/master/_CLS/habra/cube.xml")
  	
 	set st = ..DownloadFiles(links, req, .list)
 	set st2 = $system.OBJ.CompileList(.list)
