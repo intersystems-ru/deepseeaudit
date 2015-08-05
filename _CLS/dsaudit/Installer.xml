@@ -197,7 +197,7 @@ Download src and compile cube class.<br>
 	zn Namespace
  	set links = ##class(%ListOfDataTypes).%New()
  	
- 	do links.Insert("https://raw.githubusercontent.com/intersystems-ru/deepseeaudit/master/_CLS/habra/cube.xml")
+ 	do links.Insert("https://raw.githubusercontent.com/intersystems-ru/deepseeaudit/master/_CLS/dsaudit/cube.xml")
  	do links.Insert("https://raw.githubusercontent.com/intersystems-ru/deepseeaudit/master/_DFI/pivot.xml")
  	do links.Insert("https://raw.githubusercontent.com/intersystems-ru/deepseeaudit/master/_DFI/dashboard.xml")
  	
