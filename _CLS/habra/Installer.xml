@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-32) 2015.1 (Build 429U)" ts="2015-08-03 03:03:17">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-32) 2015.1 (Build 429U)" ts="2015-08-05 12:30:06">
 <Class name="DeepSeeAudit.Installer">
 <Super>%XML.Adaptor</Super>
-<TimeChanged>63767,8944.109193</TimeChanged>
+<TimeChanged>63769,44962.578221</TimeChanged>
 <TimeCreated>63753,62724.562305</TimeCreated>
 
 <XData name="Install">
@@ -163,7 +163,7 @@
 	
 	do tInstaller.PushNS(namespace)
 	do ..DownloadCube(namespace)
-	set status = ##class(%DeepSee.Utils).%BuildCube("Аудит")
+	set status = ##class(%DeepSee.Utils).%BuildCube("Audit")
 	if $$$ISERR(status) throw ##class(%Installer.Exception).CreateFromStatus(status)
 	
 	do tInstaller.PopNS()
@@ -178,8 +178,7 @@ Download src and compile cube class.<br>
 <ClassMethod>1</ClassMethod>
 <FormalSpec>Namespace:%String</FormalSpec>
 <Implementation><![CDATA[
-    set owner = "mkashche"
-    //set owner = "intersystems-ru"
+    set owner = "intersystems-ru"
     set repository = "deepseeaudit"
     set branch = "master"
     Set SSLConfig = "GitHub"
@@ -195,12 +194,12 @@ Download src and compile cube class.<br>
 	do:$d(branch) req.SetParam("ref", branch) 								// if omitted the repository’s default branch (usually master) would be used
 	do req.SetHeader("Accept","application/vnd.github.v3+json") 			// we want to receive API v3
 
-	zn Namespace	
+	zn Namespace
  	set links = ##class(%ListOfDataTypes).%New()
  	
- 	do links.Insert("https://raw.githubusercontent.com/mkashche/deepseeaudit/master/_CLS/habra/cube.xml")
- 	do links.Insert("https://raw.githubusercontent.com/mkashche/deepseeaudit/master/_DFI/pivot.xml")
- 	do links.Insert("https://raw.githubusercontent.com/mkashche/deepseeaudit/master/_DFI/dashboard.xml")
+ 	do links.Insert("https://raw.githubusercontent.com/intersystems-ru/deepseeaudit/master/_CLS/habra/cube.xml")
+ 	do links.Insert("https://raw.githubusercontent.com/intersystems-ru/deepseeaudit/master/_DFI/pivot.xml")
+ 	do links.Insert("https://raw.githubusercontent.com/intersystems-ru/deepseeaudit/master/_DFI/dashboard.xml")
  	
 	set st = ..DownloadFiles(links, req, .list)	
 	set st2 = $system.OBJ.CompileList(.list)
