@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Export generator="Cache" version="25">
-<Class name="habra.cube">
+<Class name="dsaudit.cube">
 <Description>
-Данные аудита</Description>
+Audit data</Description>
 <ProcedureBlock>1</ProcedureBlock>
 <Super>%DeepSee.CubeDefinition</Super>
 <TimeCreated>63690,78892.562265</TimeCreated>
