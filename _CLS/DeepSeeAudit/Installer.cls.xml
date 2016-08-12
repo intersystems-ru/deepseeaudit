@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-32) 2015.1 (Build 429U)" ts="2015-08-03 03:03:17">
+<Export generator="Cache" version="25">
 <Class name="DeepSeeAudit.Installer">
 <Super>%XML.Adaptor</Super>
-<TimeChanged>63767,8944.109193</TimeChanged>
 <TimeCreated>63753,62724.562305</TimeCreated>
 
 <XData name="Install">

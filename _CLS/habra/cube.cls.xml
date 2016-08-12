@@ -8,7 +8,8 @@
 <TimeCreated>63690,78892.562265</TimeCreated>
 <DependsOn>%SYS.Audit</DependsOn>
 
-<Parameter name="DOMAIN"/>
+<Parameter name="DOMAIN">
+</Parameter>
 
 <XData name="Cube">
 <Description>
