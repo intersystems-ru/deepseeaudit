@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-32) 2015.1 (Build 429U)" ts="2015-08-03 03:03:17">
+<Export generator="Cache" version="25" zv="Cache for UNIX (SUSE Linux Enterprise Server for x86-64) 2016.1 (Build 656U)" ts="2016-08-12 14:29:04">
 <Class name="DeepSeeAudit.Installer">
 <Super>%XML.Adaptor</Super>
-<TimeChanged>63767,8944.109193</TimeChanged>
+<TimeChanged>64142,51088.159809</TimeChanged>
 <TimeCreated>63753,62724.562305</TimeCreated>
 
 <XData name="Install">
@@ -26,10 +26,11 @@
 </If>
 
 <Namespace Name="${Namespace}" Create="no">
-<Log Text="Mapping globals" Level="0"/>
+<Log Text="Mapping globals and packages" Level="0"/>
 <Configuration>
 <Database Name="${Namespace}" Dir="${MGRDIR}/${Namespace}" Create="no"/>
 <GlobalMapping Global="CacheAuditD" From="CACHEAUDIT"/> 
+<ClassMapping Package="Security.Datatype" From="CACHESYS"/>
 </Configuration>
 <Log Text="...Ready!" Level="0"/>
 
@@ -163,7 +164,7 @@
 	
 	do tInstaller.PushNS(namespace)
 	do ..DownloadCube(namespace)
-	set status = ##class(%DeepSee.Utils).%BuildCube("Аудит")
+	set status = ##class(%DeepSee.Utils).%BuildCube("Audit")
 	if $$$ISERR(status) throw ##class(%Installer.Exception).CreateFromStatus(status)
 	
 	do tInstaller.PopNS()
@@ -194,15 +195,17 @@ Download src and compile cube class.<br>
 	set req.Location = "repos/" _ owner _ "/" _ repository _ "/contents" 	// as described in https://developer.github.com/v3/repos/	
 	do:$d(branch) req.SetParam("ref", branch) 								// if omitted the repository’s default branch (usually master) would be used
 	do req.SetHeader("Accept","application/vnd.github.v3+json") 			// we want to receive API v3
-
-	zn Namespace	
+	
  	set links = ##class(%ListOfDataTypes).%New()
  	
- 	do links.Insert("https://raw.githubusercontent.com/mkashche/deepseeaudit/master/_CLS/habra/cube.xml")
+ 	/*do links.Insert("https://raw.githubusercontent.com/mkashche/deepseeaudit/master/_CLS/habra/cube.xml")
  	do links.Insert("https://raw.githubusercontent.com/mkashche/deepseeaudit/master/_DFI/pivot.xml")
- 	do links.Insert("https://raw.githubusercontent.com/mkashche/deepseeaudit/master/_DFI/dashboard.xml")
+ 	do links.Insert("https://raw.githubusercontent.com/mkashche/deepseeaudit/master/_DFI/dashboard.xml")*/
+ 	Set st = ..ProcessDirectory("",req,.links)
+ 	Return:$$$ISERR(st) st
  	
-	set st = ..DownloadFiles(links, req, .list)	
+ 	zn Namespace
+	set st = ..DownloadFiles(links, req, .list)
 	set st2 = $system.OBJ.CompileList(.list)
 	
 	set status = $$$ADDSC(st, st2)
@@ -243,6 +246,53 @@ Download list of files on https://raw.githubusercontent.com/ server.<br>
 	
 	set Request.Server = "api.github.com"
 	return st
+]]></Implementation>
+</Method>
+
+<Method name="ProcessDirectory">
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[Path:%String="",Request:%Net.HttpRequest,&Links:%ListOfDataTypes]]></FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Set location = Request.Location
+	Set Request.Location = Request.Location _ Path
+	
+	Set st = Request.Get(,,$$$NO)
+	Return:$$$ISERR(st) st
+	Return:(Request.HttpResponse.StatusCode = 404) $$$ERROR($$$GeneralError,"Repository doesn't exist OR you don't have access")
+	Return:((Request.HttpResponse.StatusCode = 403) && (Request.HttpResponse.GetHeader("X-RATELIMIT-REMAINING")=0)) $$$ERROR($$$GeneralError,"API rate limit exceeded. Try logging in.")
+ 	Return:(Request.HttpResponse.StatusCode '= 200) $$$ERROR($$$GeneralError,"Received " _ Request.HttpResponse.StatusCode _ " status, expected 200")
+ 	
+ 	#dim objects As List of %ZEN.proxyObject
+ 	#dim obj As %ZEN.proxyObject
+	Set st = ##class(%ZEN.Auxiliary.jsonProvider).%ConvertJSONToObject(Request.HttpResponse.Data,,.objects,1)
+	Return:$$$ISERR(st) st
+	
+	For i = 1:1:objects.Count() {		
+		Set obj = objects.GetAt(i)
+		If (obj.type = "dir") {
+			Set st = ..ProcessDirectory("/"_obj.name,Request,.Links)
+			Return:$$$ISERR(st) st		
+		} ElseIf (obj.type = "file") {
+			Do:..IsCacheFile(obj) Links.Insert(obj."download_url")
+		} Else {
+			// obj.type = "symlink" or obj.type = "submodule"
+		} 
+	}
+	Set Request.Location = location // to keep track of where in the repository tree we are
+	Return $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="IsCacheFile">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>File:%ZEN.proxyObject</FormalSpec>
+<ReturnType>%Boolean</ReturnType>
+<Implementation><![CDATA[
+	Set extensions = ",xml,cls,csp,csr,mac,int,bas,inc,gbl,prj,obj,pkg,gof,"
+	Return:($L(File.name,".")=1) 0 //no extension
+	Set File.Extension = $P(File.name,".",$L(File.name,"."))
+	Return $F(extensions,","_$ZCVT(File.Extension,"l")_",")
 ]]></Implementation>
 </Method>
 </Class>
