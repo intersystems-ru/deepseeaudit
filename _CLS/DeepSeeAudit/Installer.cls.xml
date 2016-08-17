@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2016.1 (Build 656U)" ts="2016-08-17 17:32:58">
+<Export generator="Cache" version="25">
 <Class name="DeepSeeAudit.Installer">
 <Super>%XML.Adaptor</Super>
-<TimeChanged>64142,51088.159809</TimeChanged>
 <TimeCreated>63753,62724.562305</TimeCreated>
 
 <XData name="Install">
@@ -163,7 +162,7 @@
 	set namespace = tInstaller.Evaluate("${Namespace}")
 	
 	do tInstaller.PushNS(namespace)
-	do ..DownloadCube(namespace)
+	do ..Update()
 	set status = ##class(%DeepSee.Utils).%BuildCube("Audit")
 	if $$$ISERR(status) throw ##class(%Installer.Exception).CreateFromStatus(status)
 	
@@ -172,18 +171,19 @@
 ]]></Implementation>
 </Method>
 
-<Method name="DownloadCube">
+<Method name="Update">
 <Description><![CDATA[
 Download src and compile cube class.<br>
 <b>Namespace</b> - Namespace where audit cube should be created.]]></Description>
 <ClassMethod>1</ClassMethod>
-<FormalSpec>Namespace:%String</FormalSpec>
 <Implementation><![CDATA[
     set owner = "mkashche"
     //set owner = "intersystems-ru"
     set repository = "deepseeaudit"
     set branch = "master"
     Set SSLConfig = "GitHub"
+    
+    set Namespace = $namespace
    
     zn "%SYS"
     do:'##class(Security.SSLConfigs).Exists(SSLConfig) ##class(Security.SSLConfigs).Create(SSLConfig)
