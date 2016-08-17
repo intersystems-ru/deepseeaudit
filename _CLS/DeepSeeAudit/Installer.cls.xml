@@ -1,14 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<<<<<<< HEAD:_CLS/DeepSeeAudit/Installer.cls.xml
-<Export generator="Cache" version="25" zv="Cache for UNIX (SUSE Linux Enterprise Server for x86-64) 2016.1 (Build 656U)" ts="2016-08-12 14:29:04">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2016.1 (Build 656U)" ts="2016-08-17 17:32:58">
 <Class name="DeepSeeAudit.Installer">
 <Super>%XML.Adaptor</Super>
 <TimeChanged>64142,51088.159809</TimeChanged>
-=======
-<Export generator="Cache" version="25">
-<Class name="DeepSeeAudit.Installer">
-<Super>%XML.Adaptor</Super>
->>>>>>> a1cf3e16d148c338b3dd4c9f9db4dd48ceb10b47:_CLS/DeepSeeAudit/Installer.cls.xml
 <TimeCreated>63753,62724.562305</TimeCreated>
 
 <XData name="Install">
