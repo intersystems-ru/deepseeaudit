@@ -177,8 +177,7 @@ Download src and compile cube class.<br>
 <b>Namespace</b> - Namespace where audit cube should be created.]]></Description>
 <ClassMethod>1</ClassMethod>
 <Implementation><![CDATA[
-    set owner = "mkashche"
-    //set owner = "intersystems-ru"
+    set owner = "intersystems-ru"
     set repository = "deepseeaudit"
     set branch = "master"
     Set SSLConfig = "GitHub"
