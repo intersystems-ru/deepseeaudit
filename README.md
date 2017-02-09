@@ -4,7 +4,7 @@ DeepSee Audit
 Installation
 -----------
 
-1. Download Installer.xml (from /_CLS/habra/ folder in repository) into Caché Studio (any namespace)
+1. Download Installer.xml (from /_CLS/DeepSeeAudit/ folder in repository) into Caché Studio (any namespace)
 2. Run in terminal (any namespace) under user with %All role: 
 
         set pVars("Namespace")="{Namespace}"
