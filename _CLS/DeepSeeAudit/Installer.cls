@@ -1,12 +1,8 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25">
-<Class name="DeepSeeAudit.Installer">
-<Super>%XML.Adaptor</Super>
-<TimeCreated>63753,62724.562305</TimeCreated>
+Class DeepSeeAudit.Installer Extends %XML.Adaptor
+{
 
-<XData name="Install">
-<XMLNamespace>INSTALLER</XMLNamespace>
-<Data><![CDATA[
+XData Install [ XMLNamespace = INSTALLER ]
+{
 <Manifest>
 
 <IfNotDef Var="Namespace">
@@ -47,24 +43,15 @@
 </Namespace>
 
 </Manifest>
-]]></Data>
-</XData>
+}
 
-<Method name="setup">
-<Internal>1</Internal>
-<ClassMethod>1</ClassMethod>
-<CodeMode>objectgenerator</CodeMode>
-<FormalSpec><![CDATA[&pVars,pLogLevel:%Integer=0,pInstaller:%Installer.Installer]]></FormalSpec>
-<ReturnType>%Status</ReturnType>
-<Implementation><![CDATA[ 	quit ##class(%Installer.Manifest).%Generate(%compiledclass, %code, "Install")
-]]></Implementation>
-</Method>
+ClassMethod setup(ByRef pVars, pLogLevel As %Integer = 0, pInstaller As %Installer.Installer) As %Status [ CodeMode = objectgenerator, Internal ]
+{
+ 	quit ##class(%Installer.Manifest).%Generate(%compiledclass, %code, "Install")
+}
 
-<Method name="TurnSync">
-<ClassMethod>1</ClassMethod>
-<FormalSpec>pVars,pLogLevel,tInstaller</FormalSpec>
-<ReturnType>%Status</ReturnType>
-<Implementation><![CDATA[
+ClassMethod TurnSync(pVars, pLogLevel, tInstaller) As %Status
+{
 	set namespace = tInstaller.Evaluate("${Namespace}")
 	do tInstaller.PushNS(namespace)
 	set className = "%SYS.Audit"
@@ -83,18 +70,13 @@
 	
 	do tInstaller.PopNS()
 	return $$$OK
-]]></Implementation>
-</Method>
+}
 
-<Method name="SetParameterValue">
-<Description><![CDATA[
-<b>ClassName</b> - Class where parameter should be changed.<br>
-<b>ParameterName</b> - Name of that parameter.<br>
-<b>ParameterValue</b> - New value of parameter.]]></Description>
-<ClassMethod>1</ClassMethod>
-<FormalSpec>ClassName:%String,ParameterName:%String,ParameterValue:%String</FormalSpec>
-<ReturnType>%Status</ReturnType>
-<Implementation><![CDATA[
+/// <b>ClassName</b> - Class where parameter should be changed.<br>
+/// <b>ParameterName</b> - Name of that parameter.<br>
+/// <b>ParameterValue</b> - New value of parameter.
+ClassMethod SetParameterValue(ClassName As %String, ParameterName As %String, ParameterValue As %String) As %Status
+{
 	if (##class(%Dictionary.ParameterDefinition).%ExistsId(ClassName _ "||" _ ParameterName) = 1) {
 		set pDef = ##class(%Dictionary.ParameterDefinition).%OpenId(ClassName _ "||" _ ParameterName)
 	} else {
@@ -104,14 +86,10 @@
 	set pDef.Default = ParameterValue
 	set status = pDef.%Save()
 	return status
-]]></Implementation>
-</Method>
+}
 
-<Method name="PrepareCSP">
-<ClassMethod>1</ClassMethod>
-<FormalSpec>pVars,pLogLevel,tInstaller</FormalSpec>
-<ReturnType>%Status</ReturnType>
-<Implementation><![CDATA[
+ClassMethod PrepareCSP(pVars, pLogLevel, tInstaller) As %Status
+{
 	set namespace = tInstaller.Evaluate("${Namespace}")
 	set cspName = "/csp/" _ namespace
 	
@@ -151,14 +129,10 @@
 	//do EnableDeepSee^%SYS.cspServer("/csp/" _ namespace _ "/")
 	do tInstaller.PopNS()
 	return $$$OK
-]]></Implementation>
-</Method>
+}
 
-<Method name="BuildCube">
-<ClassMethod>1</ClassMethod>
-<FormalSpec>pVars,pLogLevel,tInstaller</FormalSpec>
-<ReturnType>%Status</ReturnType>
-<Implementation><![CDATA[
+ClassMethod BuildCube(pVars, pLogLevel, tInstaller) As %Status
+{
 	set namespace = tInstaller.Evaluate("${Namespace}")
 	
 	do tInstaller.PushNS(namespace)
@@ -168,15 +142,12 @@
 	
 	do tInstaller.PopNS()
 	return $$$OK
-]]></Implementation>
-</Method>
+}
 
-<Method name="Update">
-<Description><![CDATA[
-Download src and compile cube class.<br>
-<b>Namespace</b> - Namespace where audit cube should be created.]]></Description>
-<ClassMethod>1</ClassMethod>
-<Implementation><![CDATA[
+/// Download src and compile cube class.<br>
+/// <b>Namespace</b> - Namespace where audit cube should be created.
+ClassMethod Update()
+{
     set owner = "intersystems-ru"
     set repository = "deepseeaudit"
     set branch = "master"
@@ -209,19 +180,14 @@ Download src and compile cube class.<br>
 	
 	set status = $$$ADDSC(st, st2)
 	if $$$ISERR(status) throw ##class(%Installer.Exception).CreateFromStatus(status)
-]]></Implementation>
-</Method>
+}
 
-<Method name="DownloadFiles">
-<Description><![CDATA[
-Download list of files on https://raw.githubusercontent.com/ server.<br>
-<b>Links</b> - List of links to raw files.<br>
-<b>Request</b> - Authenticated/Set %Net.HttpRequest object.<br>
-<b>Items</b> - Returns an array of the items loaded. ]]></Description>
-<ClassMethod>1</ClassMethod>
-<FormalSpec>Links:%ListOfDataTypes,Request:%Net.HttpRequest,*Items</FormalSpec>
-<ReturnType>%Status</ReturnType>
-<Implementation><![CDATA[
+/// Download list of files on https://raw.githubusercontent.com/ server.<br>
+/// <b>Links</b> - List of links to raw files.<br>
+/// <b>Request</b> - Authenticated/Set %Net.HttpRequest object.<br>
+/// <b>Items</b> - Returns an array of the items loaded. 
+ClassMethod DownloadFiles(Links As %ListOfDataTypes, Request As %Net.HttpRequest, Output Items) As %Status
+{
 	kill Items
 	set Request.Server = "raw.githubusercontent.com"
 	set st = $$$OK
@@ -245,14 +211,10 @@ Download list of files on https://raw.githubusercontent.com/ server.<br>
 	
 	set Request.Server = "api.github.com"
 	return st
-]]></Implementation>
-</Method>
+}
 
-<Method name="ProcessDirectory">
-<ClassMethod>1</ClassMethod>
-<FormalSpec><![CDATA[Path:%String="",Request:%Net.HttpRequest,&Links:%ListOfDataTypes]]></FormalSpec>
-<ReturnType>%Status</ReturnType>
-<Implementation><![CDATA[
+ClassMethod ProcessDirectory(Path As %String = "", Request As %Net.HttpRequest, ByRef Links As %ListOfDataTypes) As %Status
+{
 	Set location = Request.Location
 	Set Request.Location = Request.Location _ Path
 	
@@ -280,19 +242,15 @@ Download list of files on https://raw.githubusercontent.com/ server.<br>
 	}
 	Set Request.Location = location // to keep track of where in the repository tree we are
 	Return $$$OK
-]]></Implementation>
-</Method>
+}
 
-<Method name="IsCacheFile">
-<ClassMethod>1</ClassMethod>
-<FormalSpec>File:%ZEN.proxyObject</FormalSpec>
-<ReturnType>%Boolean</ReturnType>
-<Implementation><![CDATA[
+ClassMethod IsCacheFile(File As %ZEN.proxyObject) As %Boolean
+{
 	Set extensions = ",xml,cls,csp,csr,mac,int,bas,inc,gbl,prj,obj,pkg,gof,"
 	Return:($L(File.name,".")=1) 0 //no extension
 	Set File.Extension = $P(File.name,".",$L(File.name,"."))
 	Return $F(extensions,","_$ZCVT(File.Extension,"l")_",")
-]]></Implementation>
-</Method>
-</Class>
-</Export>
+}
+
+}
+
