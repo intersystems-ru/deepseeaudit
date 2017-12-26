@@ -1,8 +1,13 @@
-Class DeepSeeAudit.Installer Extends %XML.Adaptor
-{
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2017.1 (Build 730U)" ts="2017-12-26 20:23:18">
+<Class name="DeepSeeAudit.Installer">
+<Super>%XML.Adaptor</Super>
+<TimeChanged>64643,73381.381797</TimeChanged>
+<TimeCreated>63753,62724.562305</TimeCreated>
 
-XData Install [ XMLNamespace = INSTALLER ]
-{
+<XData name="Install">
+<XMLNamespace>INSTALLER</XMLNamespace>
+<Data><![CDATA[
 <Manifest>
 
 <IfNotDef Var="Namespace">
@@ -51,15 +56,24 @@ XData Install [ XMLNamespace = INSTALLER ]
 </Namespace>
 
 </Manifest>
-}
+]]></Data>
+</XData>
 
-ClassMethod setup(ByRef pVars, pLogLevel As %Integer = 0, pInstaller As %Installer.Installer) As %Status [ CodeMode = objectgenerator, Internal ]
-{
- 	quit ##class(%Installer.Manifest).%Generate(%compiledclass, %code, "Install")
-}
+<Method name="setup">
+<Internal>1</Internal>
+<ClassMethod>1</ClassMethod>
+<CodeMode>objectgenerator</CodeMode>
+<FormalSpec><![CDATA[&pVars,pLogLevel:%Integer=0,pInstaller:%Installer.Installer]]></FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[ 	quit ##class(%Installer.Manifest).%Generate(%compiledclass, %code, "Install")
+]]></Implementation>
+</Method>
 
-ClassMethod TurnSync(pVars, pLogLevel, tInstaller) As %Status
-{
+<Method name="TurnSync">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pVars,pLogLevel,tInstaller</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
 	set namespace = tInstaller.Evaluate("${Namespace}")
 	do tInstaller.PushNS(namespace)
 	set className = "%SYS.Audit"
@@ -78,13 +92,18 @@ ClassMethod TurnSync(pVars, pLogLevel, tInstaller) As %Status
 	
 	do tInstaller.PopNS()
 	return $$$OK
-}
+]]></Implementation>
+</Method>
 
-/// <b>ClassName</b> - Class where parameter should be changed.<br>
-/// <b>ParameterName</b> - Name of that parameter.<br>
-/// <b>ParameterValue</b> - New value of parameter.
-ClassMethod SetParameterValue(ClassName As %String, ParameterName As %String, ParameterValue As %String) As %Status
-{
+<Method name="SetParameterValue">
+<Description><![CDATA[
+<b>ClassName</b> - Class where parameter should be changed.<br>
+<b>ParameterName</b> - Name of that parameter.<br>
+<b>ParameterValue</b> - New value of parameter.]]></Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>ClassName:%String,ParameterName:%String,ParameterValue:%String</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
 	if (##class(%Dictionary.ParameterDefinition).%ExistsId(ClassName _ "||" _ ParameterName) = 1) {
 		set pDef = ##class(%Dictionary.ParameterDefinition).%OpenId(ClassName _ "||" _ ParameterName)
 	} else {
@@ -94,10 +113,14 @@ ClassMethod SetParameterValue(ClassName As %String, ParameterName As %String, Pa
 	set pDef.Default = ParameterValue
 	set status = pDef.%Save()
 	return status
-}
+]]></Implementation>
+</Method>
 
-ClassMethod PrepareCSP(pVars, pLogLevel, tInstaller) As %Status
-{
+<Method name="PrepareCSP">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pVars,pLogLevel,tInstaller</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
 	set namespace = tInstaller.Evaluate("${Namespace}")
 	set cspName = "/csp/" _ namespace
 	
@@ -137,10 +160,14 @@ ClassMethod PrepareCSP(pVars, pLogLevel, tInstaller) As %Status
 	//do EnableDeepSee^%SYS.cspServer("/csp/" _ namespace _ "/")
 	do tInstaller.PopNS()
 	return $$$OK
-}
+]]></Implementation>
+</Method>
 
-ClassMethod BuildCube(pVars, pLogLevel, tInstaller) As %Status
-{
+<Method name="BuildCube">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pVars,pLogLevel,tInstaller</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
 	set namespace = tInstaller.Evaluate("${Namespace}")
 	
 	do tInstaller.PushNS(namespace)
@@ -149,10 +176,13 @@ ClassMethod BuildCube(pVars, pLogLevel, tInstaller) As %Status
 	
 	do tInstaller.PopNS()
 	return $$$OK
-}
+]]></Implementation>
+</Method>
 
-ClassMethod CopyClasses(pVars, pLogLevel, tInstaller)
-{
+<Method name="CopyClasses">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pVars,pLogLevel,tInstaller</FormalSpec>
+<Implementation><![CDATA[
 	
 	set sc = $$$OK
 	
@@ -185,10 +215,13 @@ ClassMethod CopyClasses(pVars, pLogLevel, tInstaller)
 	}
 		
 	quit sc
-}
+]]></Implementation>
+</Method>
 
-ClassMethod CopyDFI(pVars, pLogLevel, tInstaller)
-{
+<Method name="CopyDFI">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pVars,pLogLevel,tInstaller</FormalSpec>
+<Implementation><![CDATA[
 	set sc = $$$OK
 	set i = 0
 	
@@ -242,7 +275,7 @@ ClassMethod CopyDFI(pVars, pLogLevel, tInstaller)
 	}
 	
 	quit sc
-}
-
-}
-
+]]></Implementation>
+</Method>
+</Class>
+</Export>

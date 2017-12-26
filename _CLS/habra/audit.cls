@@ -49,7 +49,7 @@ ClassMethod OnPreHTTP() As %Boolean [ ServerOnly = 1 ]
 	set name = $order( %request.Data("") )	;узнаем какая кнопка вызвала отправку
 
 	#; сохраняем в журнал аудита ( Source, Type, Name, EventData, Description )
-	set status = ##class(%SYSTEM.Security).Audit( "habra", "audit", name, "нажал кнопку", "1984" )
+	set status = ##class(%SYSTEM.Security).Audit( "habra", "audit", name, "Button pushed", "1984" )
 
 	Quit 1
 }
