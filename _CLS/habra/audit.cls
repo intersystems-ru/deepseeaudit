@@ -1,17 +1,10 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25">
-<Class name="habra.audit">
-<Description>
-Пример использования подсистемы аудита в прикладном коде</Description>
-<Super>%CSP.Page</Super>
-<TimeCreated>63689,63742.905501</TimeCreated>
+/// Пример использования подсистемы аудита в прикладном коде
+Class habra.audit Extends %CSP.Page
+{
 
-<Method name="EventTypesRegister">
-<Description>
-Регистрация прикладных ( пользовательских ) типов событий </Description>
-<ClassMethod>1</ClassMethod>
-<ReturnType>%Status</ReturnType>
-<Implementation><![CDATA[
+/// Регистрация прикладных ( пользовательских ) типов событий 
+ClassMethod EventTypesRegister() As %Status
+{
 	#; Типы событий регистрируются через класс из системной области %SYS
 	set ns = $namespace, $namespace = "%SYS"
 	
@@ -25,15 +18,11 @@
 	set status = ( statusC && statusR && statusU && statusD )
 	
 	Quit status
-]]></Implementation>
-</Method>
+}
 
-<Method name="OnPage">
-<Description>
-Простая страница с несколькими кнопками</Description>
-<ClassMethod>1</ClassMethod>
-<ReturnType>%Status</ReturnType>
-<Implementation><![CDATA[
+/// Простая страница с несколькими кнопками
+ClassMethod OnPage() As %Status
+{
  
  &html<<!DOCTYPE html><html><head></head><body>
 	
@@ -49,26 +38,21 @@
 </body></html>>
 
  Quit 1
-]]></Implementation>
-</Method>
+}
 
-<Method name="OnPreHTTP">
-<Description>
-Разбираем параметры формы</Description>
-<ClassMethod>1</ClassMethod>
-<ReturnType>%Boolean</ReturnType>
-<ServerOnly>1</ServerOnly>
-<Implementation><![CDATA[
+/// Разбираем параметры формы
+ClassMethod OnPreHTTP() As %Boolean [ ServerOnly = 1 ]
+{
 	
 	#; форма отправит на сервер единственный параметр - имя кнопки
 	#; http://[server]/[app]/[class]?name=
 	set name = $order( %request.Data("") )	;узнаем какая кнопка вызвала отправку
 
 	#; сохраняем в журнал аудита ( Source, Type, Name, EventData, Description )
-	set status = ##class(%SYSTEM.Security).Audit( "habra", "audit", name, "нажал кнопку", "1984" )
+	set status = ##class(%SYSTEM.Security).Audit( "habra", "audit", name, "Button pushed", "1984" )
 
 	Quit 1
-]]></Implementation>
-</Method>
-</Class>
-</Export>
+}
+
+}
+

@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2017.1 (Build 730U)" ts="2017-12-26 20:23:18">
 <Class name="DeepSeeAudit.Installer">
 <Super>%XML.Adaptor</Super>
+<TimeChanged>64643,73381.381797</TimeChanged>
 <TimeCreated>63753,62724.562305</TimeCreated>
 
 <XData name="Install">
@@ -31,6 +32,14 @@
 <GlobalMapping Global="CacheAuditD" From="CACHEAUDIT"/> 
 <ClassMapping Package="Security.Datatype" From="CACHESYS"/>
 </Configuration>
+<Log Text="...Ready!" Level="0"/>
+
+<Log Text="Copying classes" Level="0"/>
+<RunInstall Class="DeepSeeAudit.Installer" Method="CopyClasses"/>
+<Log Text="...Ready!" Level="0"/>
+
+<Log Text="Copying dashboards and pivots" Level="0"/>
+<RunInstall Class="DeepSeeAudit.Installer" Method="CopyDFI"/>
 <Log Text="...Ready!" Level="0"/>
 
 <Log Text="Prepare web application, enable audit" Level="0"/>
@@ -162,7 +171,6 @@
 	set namespace = tInstaller.Evaluate("${Namespace}")
 	
 	do tInstaller.PushNS(namespace)
-	do ..Update()
 	set status = ##class(%DeepSee.Utils).%BuildCube("Audit")
 	if $$$ISERR(status) throw ##class(%Installer.Exception).CreateFromStatus(status)
 	
@@ -171,127 +179,102 @@
 ]]></Implementation>
 </Method>
 
-<Method name="Update">
-<Description><![CDATA[
-Download src and compile cube class.<br>
-<b>Namespace</b> - Namespace where audit cube should be created.]]></Description>
+<Method name="CopyClasses">
 <ClassMethod>1</ClassMethod>
+<FormalSpec>pVars,pLogLevel,tInstaller</FormalSpec>
 <Implementation><![CDATA[
-    set owner = "intersystems-ru"
-    set repository = "deepseeaudit"
-    set branch = "master"
-    Set SSLConfig = "GitHub"
-    
-    set Namespace = $namespace
-   
-    zn "%SYS"
-    do:'##class(Security.SSLConfigs).Exists(SSLConfig) ##class(Security.SSLConfigs).Create(SSLConfig)
-
- 	set req = ##class(%Net.HttpRequest).%New()
- 	set req.Https = 1
-	set req.SSLConfiguration = SSLConfig
-	set req.Server = "api.github.com"
-	set req.Location = "repos/" _ owner _ "/" _ repository _ "/contents" 	// as described in https://developer.github.com/v3/repos/	
-	do:$d(branch) req.SetParam("ref", branch) 								// if omitted the repository’s default branch (usually master) would be used
-	do req.SetHeader("Accept","application/vnd.github.v3+json") 			// we want to receive API v3
 	
- 	set links = ##class(%ListOfDataTypes).%New()
- 	
- 	/*do links.Insert("https://raw.githubusercontent.com/mkashche/deepseeaudit/master/_CLS/habra/cube.xml")
- 	do links.Insert("https://raw.githubusercontent.com/mkashche/deepseeaudit/master/_DFI/pivot.xml")
- 	do links.Insert("https://raw.githubusercontent.com/mkashche/deepseeaudit/master/_DFI/dashboard.xml")*/
- 	Set st = ..ProcessDirectory("",req,.links)
- 	Return:$$$ISERR(st) st
- 	
- 	zn Namespace
-	set st = ..DownloadFiles(links, req, .list)
-	set st2 = $system.OBJ.CompileList(.list)
+	set sc = $$$OK
 	
-	set status = $$$ADDSC(st, st2)
-	if $$$ISERR(status) throw ##class(%Installer.Exception).CreateFromStatus(status)
+	set i = 0
+	while 1 {
+		set id = "DeepSeeAudit.CLSData||File" _ i
+		if (##class(%Dictionary.CompiledXData).%ExistsId(id) = 0) Q	
+		set class = ##class(%Dictionary.CompiledXData).%OpenId(id)
+		set data = $zconvert(class.Data.Read(class.Data.Size), "O", "UTF8")
+		set className = $piece(class.Description,".",1,*-1)
+		
+		set Namespace = tInstaller.Evaluate("${Namespace}")
+		do tInstaller.PushNS(Namespace)
+		
+		if ('##class(%Dictionary.ClassDefinition).%ExistsId(className)) {
+			set clsDef = ##class(%Dictionary.ClassDefinition).%New()
+			set clsDef.Name = className
+			set sc = clsDef.%Save()
+			do tInstaller.Log(pLogLevel, "Creating class", className)
+			quit:$$$ISERR(sc) 
+		}
+		
+		set sc = ##class(%Compiler.UDL.TextServices).SetTextFromString(,className,$System.Encryption.Base64Decode(data))
+		
+		do $system.OBJ.Compile(className)
+		
+		do tInstaller.PopNS()
+		
+		set i = i + 1
+	}
+		
+	quit sc
 ]]></Implementation>
 </Method>
 
-<Method name="DownloadFiles">
-<Description><![CDATA[
-Download list of files on https://raw.githubusercontent.com/ server.<br>
-<b>Links</b> - List of links to raw files.<br>
-<b>Request</b> - Authenticated/Set %Net.HttpRequest object.<br>
-<b>Items</b> - Returns an array of the items loaded. ]]></Description>
+<Method name="CopyDFI">
 <ClassMethod>1</ClassMethod>
-<FormalSpec>Links:%ListOfDataTypes,Request:%Net.HttpRequest,*Items</FormalSpec>
-<ReturnType>%Status</ReturnType>
+<FormalSpec>pVars,pLogLevel,tInstaller</FormalSpec>
 <Implementation><![CDATA[
-	kill Items
-	set Request.Server = "raw.githubusercontent.com"
-	set st = $$$OK
+	set sc = $$$OK
+	set i = 0
 	
-	for i = 1:1:Links.Count() {
-		set streq = Request.Get($e(Links.GetAt(i),35,*)) // Remove "https://raw.githubusercontent.com/" from URL. 
-  		set:$$$ISERR(streq) st = $$$ADDSC(st, streq)
-  		set binarystream = Request.HttpResponse.Data
-  		do binarystream.Rewind() // just in case
-
-  		set stream = ##class(%GlobalCharacterStream).%New() //translating binary stream into character stream
-  		while 'binarystream.AtEnd { 
-  			do stream.Write(binarystream.Read()) 
-  		}
-  		do stream.Rewind()
-
-  		set stload = $system.OBJ.LoadStream(stream,"",.error,.items,,,,"UTF8")
-  		set:$$$ISERR(stload) st = $$$ADDSC(st, stload)
-  		merge Items = items  // Does not overwrite existing array keys: Items(itemname)=""	
+	while 1 {
+		set id = "DeepSeeAudit.DFIData||File" _ i
+		if (##class(%Dictionary.CompiledXData).%ExistsId(id) = 0) Q		
+		set dfi = ##class(%Dictionary.CompiledXData).%OpenId(id)
+		set data = ##class(%GlobalCharacterStream).%New()
+		do data.Clear()
+		
+		do data.Write(
+			$System.Encryption.Base64Decode(
+				$zconvert(
+					dfi.Data.Read(dfi.Data.Size), 
+					"O", 
+					"UTF8"
+					)
+				)
+			)
+			
+		set dfiName = dfi.Description
+				
+		set Namespace = tInstaller.Evaluate("${Namespace}")
+		do tInstaller.PushNS(Namespace)
+		
+		if '##class(%DeepSee.UI.FolderItemDocument).%ExistsId(dfiName) {
+			try {
+		        set tDoc = ##class(%DeepSee.UI.FolderItemDocument).%New(dfiName)
+		        set sc = tDoc.ImportFromXML(data)
+		        set sc = tDoc.Save()
+		        do tInstaller.Log(pLogLevel, "Creating DFI", dfiName)
+		    } Catch e {
+		        set sc = e.AsStatus()
+		        quit
+		    }
+		} else {
+			try {
+				set tDoc = ##class(%DeepSee.UI.FolderItemDocument).%OpenId(dfiName)
+				set sc = tDoc.ImportFromXML(data)
+				set sc = tDoc.Save()
+				do tInstaller.Log(pLogLevel, "Creating DFI", dfiName)
+			} Catch e {
+		        set sc = e.AsStatus()
+		        quit
+		    }
+		}
+		
+		do tInstaller.PopNS()
+		
+		set i = i + 1
 	}
 	
-	set Request.Server = "api.github.com"
-	return st
-]]></Implementation>
-</Method>
-
-<Method name="ProcessDirectory">
-<ClassMethod>1</ClassMethod>
-<FormalSpec><![CDATA[Path:%String="",Request:%Net.HttpRequest,&Links:%ListOfDataTypes]]></FormalSpec>
-<ReturnType>%Status</ReturnType>
-<Implementation><![CDATA[
-	Set location = Request.Location
-	Set Request.Location = Request.Location _ Path
-	
-	Set st = Request.Get(,,$$$NO)
-	Return:$$$ISERR(st) st
-	Return:(Request.HttpResponse.StatusCode = 404) $$$ERROR($$$GeneralError,"Repository doesn't exist OR you don't have access")
-	Return:((Request.HttpResponse.StatusCode = 403) && (Request.HttpResponse.GetHeader("X-RATELIMIT-REMAINING")=0)) $$$ERROR($$$GeneralError,"API rate limit exceeded. Try logging in.")
- 	Return:(Request.HttpResponse.StatusCode '= 200) $$$ERROR($$$GeneralError,"Received " _ Request.HttpResponse.StatusCode _ " status, expected 200")
- 	
- 	#dim objects As List of %ZEN.proxyObject
- 	#dim obj As %ZEN.proxyObject
-	Set st = ##class(%ZEN.Auxiliary.jsonProvider).%ConvertJSONToObject(Request.HttpResponse.Data,,.objects,1)
-	Return:$$$ISERR(st) st
-	
-	For i = 1:1:objects.Count() {		
-		Set obj = objects.GetAt(i)
-		If (obj.type = "dir") {
-			Set st = ..ProcessDirectory("/"_obj.name,Request,.Links)
-			Return:$$$ISERR(st) st		
-		} ElseIf (obj.type = "file") {
-			Do:..IsCacheFile(obj) Links.Insert(obj."download_url")
-		} Else {
-			// obj.type = "symlink" or obj.type = "submodule"
-		} 
-	}
-	Set Request.Location = location // to keep track of where in the repository tree we are
-	Return $$$OK
-]]></Implementation>
-</Method>
-
-<Method name="IsCacheFile">
-<ClassMethod>1</ClassMethod>
-<FormalSpec>File:%ZEN.proxyObject</FormalSpec>
-<ReturnType>%Boolean</ReturnType>
-<Implementation><![CDATA[
-	Set extensions = ",xml,cls,csp,csr,mac,int,bas,inc,gbl,prj,obj,pkg,gof,"
-	Return:($L(File.name,".")=1) 0 //no extension
-	Set File.Extension = $P(File.name,".",$L(File.name,"."))
-	Return $F(extensions,","_$ZCVT(File.Extension,"l")_",")
+	quit sc
 ]]></Implementation>
 </Method>
 </Class>

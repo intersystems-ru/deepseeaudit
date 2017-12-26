@@ -1,19 +1,10 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for UNIX (SUSE Linux Enterprise Server for x86-64) 2016.1 (Build 656U)" ts="2017-09-27 09:56:40">
-<Class name="habra.cube">
-<Description>
-Данные аудита</Description>
-<ProcedureBlock>1</ProcedureBlock>
-<Super>%DeepSee.CubeDefinition</Super>
-<TimeChanged>63855,56732.873985</TimeChanged>
-<TimeCreated>63690,78892.562265</TimeCreated>
-<DependsOn>%SYS.Audit</DependsOn>
+/// Данные аудита
+Class habra.cube Extends %DeepSee.CubeDefinition [ DependsOn = %SYS.Audit, ProcedureBlock ]
+{
 
-<XData name="Cube">
-<Description>
-Cube definition from Architect.</Description>
-<XMLNamespace>http://www.intersystems.com/deepsee</XMLNamespace>
-<Data><![CDATA[
+/// Cube definition from Architect.
+XData Cube [ XMLNamespace = "http://www.intersystems.com/deepsee" ]
+{
 <cube xmlns="http://www.intersystems.com/deepsee" name="Audit" displayName="Audit" description="Данные аудита" disabled="false" abstract="false" sourceClass="%SYS.Audit" countMeasureName="%COUNT" bucketSize="8" bitmapChunkInMemory="false" precompute="0" disableListingGroups="false">
   <dimension name="Who" disabled="false" hasAll="false" allCaption="All Username" allDisplayName="Username" type="data" calendar="gregorian" iKnowType="entity" hidden="false" showHierarchies="default">
     <hierarchy name="H1" disabled="false">
@@ -46,9 +37,9 @@ Cube definition from Architect.</Description>
     <additionalDescription>undefined</additionalDescription>
   </listing>
 </cube>
-]]></Data>
-</XData>
+}
 
-<Parameter name="DOMAIN"/>
-</Class>
-</Export>
+Parameter DOMAIN;
+
+}
+
